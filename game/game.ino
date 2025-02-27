@@ -16,6 +16,11 @@
 #define C   A2
 #define D   A3
 
+int posx = 14;
+int posy = 29;
+int lastposx = 14;
+int lastposy = 29;
+
 int grid[32*32] = {
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
@@ -79,9 +84,53 @@ void draw_matrix()
         matrix.drawPixel(x,y,matrix.Color333(7,7,7));
       }
   }
+}
 
-  matrix.fillRect(14,29,2,2, matrix.Color333(0,7,0));
+void draw_player()
+{
+  matrix.fillRect(lastposx,lastposy,2,2,matrix.Color333(0,0,0));
+  matrix.fillRect(posx,posy,2,2, matrix.Color333(0,7,0));
+}
 
+void get_input()
+{
+  lastposx = posx;
+  lastposy = posy;
+  int x_val = analogRead(A4);
+  int y_val = analogRead(A5);
+  if (x_val < 500)
+  {
+    // matrix.println("Left");
+    if (posx>1)
+    {
+      posx-=1;
+    }
+  }
+  if (x_val > 550)
+  {
+    // matrix.println("Right");
+    if (posx<29)
+    {
+      posx+=1;
+    }
+  }
+  if (y_val < 500)
+  {
+    // matrix.println("Down");
+    if (posy<29)
+    {
+      posy+=1;
+    }
+  }
+  if (y_val > 550)
+  {
+    // matrix.println("Up");
+    if (posy>1)
+    {
+      posy-=1;
+    }
+  }
+  delay(100);
 }
 
 void draw_border()
@@ -120,5 +169,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+  get_input();
+  // draw_matrix();
+  draw_player();
 }
