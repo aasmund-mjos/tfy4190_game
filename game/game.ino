@@ -16,15 +16,52 @@
 #define C   A2
 #define D   A3
 
+int[]
+
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false);
+
+void draw_border()
+{
+  for (int i = 0; i < 32; ++i)
+  {
+    matrix.drawPixel(i,0,matrix.Color333(7,0,0));
+    matrix.drawPixel(i,31,matrix.Color333(7,0,0));
+  }
+
+  for (int i = 0; i < 31; ++i)
+  {
+    matrix.drawPixel(0,i,matrix.Color333(7,0,0));
+    matrix.drawPixel(31,i,matrix.Color333(7,0,0));
+  }
+}
+
+int num_from_pos(int x, int y, int* num)
+{
+  num = x+y*32;
+}
+
+void pos_from_num(int* x, int* y, int num)
+{
+  x = num%32;
+  y = num//32;
+}
+
+
 
 void setup() {
   // put your setup code here, to run once:
 
   matrix.begin();
-  matrix.drawPixel(5,5,matrix.Color333(7,7,7));
-  delay(1000);
-  matrix.drawPixel(10,10,matrix.Color333(7,7,7));
+  matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+  matrix.setTextSize(1);     // size 1 == 8 pixels high
+  matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
+
+  matrix.setTextColor(matrix.Color333(7,7,7));
+  matrix.println("Tower");
+  matrix.setCursor(1,13);
+  matrix.println("Climb");
+
+  draw_border();
 
 }
 
