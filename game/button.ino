@@ -1,37 +1,17 @@
-import math
-import sys
-import time
-from grove.adc import ADC
+void setup()
+{
+    Serial.begin(9600);
+}
 
+void loop()
+{
+    int sensorValue1 = analogRead(A4);
+    int sensorValue2 = analogRead(A5);
 
-class GroveThumbJoystick:
-
-    def __init__(self, channelX, channelY):
-        self.channelX = channelX
-        self.channelY = channelY
-        self.adc = ADC()
-
-    @property
-    def value(self):
-        return self.adc.read(self.channelX), self.adc.read(self.channelY)
-
-Grove = GroveThumbJoystick
-
-
-def main():
-    from grove.helper import SlotHelper
-    sh = SlotHelper(SlotHelper.ADC)
-    pin = sh.argv2pin()
-
-    sensor = GroveThumbJoystick(int(pin), int(pin + 1))
-
-    while True:
-        x, y = sensor.value
-        if x > 900:
-            print('Joystick Pressed')
-        print("X, Y = {0} {1}".format(x, y))
-        time.sleep(.2)
-
-if __name__ == '__main__':
-    main()
-
+    Serial.print("The X and Y coordinate is:");
+    Serial.print(sensorValue1, DEC);
+    Serial.print(",");
+    Serial.println(sensorValue2, DEC);
+    Serial.println(" ");
+    delay(200);
+}
