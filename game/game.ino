@@ -21,6 +21,11 @@ RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false);
 void setup() {
   // put your setup code here, to run once:
 
+  matrix.begin();
+  matrix.drawPixel(5,5,matrix.Color333(7,7,7));
+  delay(1000);
+  matrix.drawPixel(10,10,matrix.Color333(7,7,7));
+
 }
 
 void loop() {
