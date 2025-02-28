@@ -98,7 +98,7 @@ void get_input()
   lastposy = posy;
   int x_val = analogRead(A4);
   int y_val = analogRead(A5);
-  if (x_val < 500)
+  if (x_val < 490)
   {
     // matrix.println("Left");
     if (posx>1)
