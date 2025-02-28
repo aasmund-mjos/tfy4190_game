@@ -188,6 +188,28 @@ void draw_border()
   }
 }
 
+void generate_coins()
+{
+  const int grid_size = sizeof(grid) / sizeof(grid[0]);
+  int coinGrid[grid_size] = {0}; 
+
+  for (int i = 0; i < 20; ++i) //Satte 20 som antall coins, men dette kan jo endres
+  {
+    int randomNumber = random(grid_size);
+
+    if (grid[randomNumber] != 1 && coinGrid[randomNumber] == 0)
+    {
+      int x, y;
+      pos_from_num(randomNumber, x, y); 
+      matrix.drawPixel(x, y, matrix.Color333(0, 7, 7));
+
+      coinGrid[randomNumber] = 1; // Markerer at en mynt er plassert her
+    }
+    else {
+      --i; // Prøver igjen
+    }
+  }
+}
 
 void setup() {
   // put your setup code here, to run once:
