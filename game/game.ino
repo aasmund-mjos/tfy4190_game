@@ -106,10 +106,10 @@ int getMatrixValue(int x, int y, const uint32_t (&grid)[grid_size]) {
 void setMatrixValue(int x, int y, int value, uint32_t (&grid)[grid_size]) {
     if (value == 1) {
         // Set the xth bit of the yth row to 1
-        grid[y] |= (1U << (31 - x));
+        grid[y] |= (1UL << (31 - x));
     } else if (value == 0) {
         // Set the xth bit of the yth row to 0
-        grid[y] &= ~(1U << (31 - x));
+        grid[y] &= ~(1UL << (31 - x));
     }
 }
 
