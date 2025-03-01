@@ -21,6 +21,11 @@ int posx = grid_size/2-2;
 int posy = grid_size-3;
 int lastposx = posx;
 int lastposy = posy;
+int stage = 1;
+
+int total_coins = 20;
+int collected_coins = 0;
+bool new_stage = false;
 
 int jump_sequence = 0;
 
@@ -30,9 +35,9 @@ const int grid_1[grid_size][grid_size] = {
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,0,1,1,1,0,0,1,1,1,0,1,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1},
+    {1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1},
+    {1,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -72,7 +77,7 @@ void pos_from_num(int& x, int& y, int& num)
 {
   x = num%grid_size;
   y = num/grid_size;
-};
+}
 
 void draw_matrix(const int (&grid)[grid_size][grid_size])
 {
@@ -100,6 +105,19 @@ bool object_in_way(int x, int y, const int (&grid)[grid_size][grid_size])
   if (grid[y+1][x+1]) {return 1;}
 
   return 0;
+}
+
+bool check_if_done(int x, int y)
+{
+  if (collected_coins == -1 && x == grid_size-2 && y == 1)
+  {
+    new_stage = true;
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 void get_input(const int (&grid)[grid_size][grid_size])
@@ -142,16 +160,15 @@ void get_input(const int (&grid)[grid_size][grid_size])
     }
   }
 
-  if (x_val < 490)  // move left
+  if (x_val < 450)  // move left
   {
     if (!object_in_way(posx-1,posy, grid))   {posx-=1;}
   }
 
   if (x_val > 550)  // move right
   {
-    if (!object_in_way(posx+1,posy, grid))    {posx+=1;}
+    if (!object_in_way(posx+1,posy, grid) or check_if_done(posx+1,posy))    {posx+=1;}
   }
-  delay(100);
 }
 
 void draw_border()
@@ -171,18 +188,19 @@ void draw_border()
 
 void generate_coins(const int (&grid)[grid_size][grid_size])
 {
-  int randomNumber;
+  long randomNumber;
   int x;
   int y;
 
-  for (int i = 0; i < 20; ++i) //Satte 20 som antall coins, men dette kan jo endres
+  for (int i = 0; i < total_coins; ++i) //Satte 20 som antall coins, men dette kan jo endres
   {
-    int randomNumber = random(grid_size*grid_size);
-    pos_from_num(randomNumber, x, y); 
+    randomNumber = random(long(grid_size*grid_size));
+    int r = int(randomNumber);
+    pos_from_num(x, y, r);
 
     if (grid[y][x] != 1 && coinGrid[y][x] == 0)
     { 
-      matrix.drawPixel(x, y, matrix.Color333(0, 7, 7));
+      matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
       coinGrid[y][x] = 1; // Markerer at en mynt er plassert her
     }
     else
@@ -190,6 +208,72 @@ void generate_coins(const int (&grid)[grid_size][grid_size])
       --i; // Prøver igjen
     }
   }
+}
+void check_coin()
+{
+  if (coinGrid[posy][posx] == 1)      {++collected_coins; coinGrid[posy][posx] += 1;}
+  if (coinGrid[posy+1][posx] == 1)    {++collected_coins; coinGrid[posy+1][posx] += 1;}
+  if (coinGrid[posy][posx+1] == 1)    {++collected_coins; coinGrid[posy][posx+1] += 1;}
+  if (coinGrid[posy+1][posx+1] == 1)  {++collected_coins; coinGrid[posy+1][posx+1] += 1;}
+}
+
+void reset_coins()
+{
+  for (int i = 0; i < grid_size; i++)
+  {
+    for (int j = 0; j < grid_size; j++)
+    {
+        coinGrid[i][j] = 0;
+    }
+  }
+}
+
+void start_animation(int stage)
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  matrix.setCursor(10, 8);    // start at top left, with one pixel of spacing
+  matrix.setTextSize(2);     // size 1 == 8 pixels high
+  matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
+
+  matrix.setTextColor(matrix.Color333(7,7,7));
+  matrix.println(stage);
+  delay(1000);
+}
+
+void reset_animation()
+{
+  delay(500);
+  posx+=1;
+  draw_player();
+  delay(500);
+  matrix.drawPixel(grid_size-1,1,matrix.Color333(0,0,0));
+  matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
+  delay(500);
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  start_animation(stage);
+
+}
+
+void reset_stage()
+{
+  stage += 1;
+
+  reset_animation();
+
+  posx = grid_size/2-2;
+  posy = grid_size-3;
+  lastposx = posx;
+  lastposy = posy;
+
+  total_coins = 20;
+  collected_coins = 0;
+  new_stage = false;
+  reset_coins();
+
+  jump_sequence = 0;
+
+  if (stage == 2) {draw_matrix(grid_1); draw_border(); generate_coins(grid_1);}  
+
 }
 
 void setup() {
@@ -204,13 +288,32 @@ void setup() {
   matrix.setCursor(1,13);
   matrix.println("Climb");
   draw_border();
-  delay(5000);
+  delay(4000);
+  start_animation(stage);
   draw_matrix(grid_1);
+  draw_border();
+  generate_coins(grid_1);
 
 }
 
 void loop() {
 
   get_input(grid_1);            // with the condition to "open" the door to the next level we can have checks and an integer to keep track of what grid we use.
+  check_coin();
   draw_player();
+  // matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+  // matrix.setTextSize(1);     // size 1 == 8 pixels high
+  // matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
+
+  // matrix.setTextColor(matrix.Color333(7,7,7));
+  // matrix.println(collected_coins);
+  if (collected_coins == total_coins)
+  {
+    matrix.drawPixel(grid_size-1,1,matrix.Color333(0,0,0));
+    matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
+    collected_coins = -1;   // means that you can move to the next stage
+  }
+  if (new_stage)  {reset_stage();}
+  delay(100);
+
 }
