@@ -29,42 +29,89 @@ bool new_stage = false;
 
 int jump_sequence = 0;
 
-int coinGrid[grid_size][grid_size] = {0};
-
-const int grid_1[grid_size][grid_size] = {
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,1,1,1,0,0,1,1,1,0,1,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1},
-    {1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1},
-    {1,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1},
-    {1,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1},
-    {1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+uint32_t coinGrid[grid_size] =
+{0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000
 };
+
+const uint32_t grid_1[grid_size] =
+{0b11111111111111111111111111111111,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b10011100111010111000011100000111,
+0b10000100100000001110000000000011,
+0b10000111100000000000000000000001,
+0b10000000000000000000000011100001,
+0b10000000000000000000000000000001,
+0b10000000011000001111000000000001,
+0b10000001110000000000000000000001,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b11110000000000000000011111000001,
+0b10000000000000000000000000000011,
+0b10000000111110000000000000000001,
+0b10000000100000000000000000000001,
+0b10000000100000000000000000110001,
+0b11111000100000000000000000000001,
+0b10000000000000000000000000000011,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b11111111111100000001111111111111,
+0b11111111000000000000011111111111,
+0b10000000000000000000000000000001,
+0b10000000000000111000000000000001,
+0b10000000000000001110000000000001,
+0b10000000000000000000000000000001,
+0b11111110000000000000000011111111,
+0b11111111100000000001111111111111,  
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b11111111111111111111111111111111};
+
+int getMatrixValue(int x, int y, const uint32_t (&grid)[grid_size]) {
+    // Use bitwise operations to check if the xth bit in the yth row is 1
+    return (grid[y] >> (31-x)) & 1;
+}
+
+void setMatrixValue(int x, int y, int value, uint32_t (&grid)[grid_size]) {
+    if (value == 1) {
+        // Set the xth bit of the yth row to 1
+        grid[y] |= (1U << (31 - x));
+    } else if (value == 0) {
+        // Set the xth bit of the yth row to 0
+        grid[y] &= ~(1U << (31 - x));
+    }
+}
 
 RGBmatrixPanel matrix(A, B, C, D, CLK, LAT, OE, false);
 
@@ -79,14 +126,14 @@ void pos_from_num(int& x, int& y, int& num)
   y = num/grid_size;
 }
 
-void draw_matrix(const int (&grid)[grid_size][grid_size])
+void draw_matrix(const uint32_t (&grid)[grid_size])
 {
   matrix.fillScreen(matrix.Color333(0,0,0));
   for (int x = 0; x < grid_size; ++x)
   {
     for (int y = 0; y < grid_size; ++y)
     {
-      if (grid[y][x])    {matrix.drawPixel(x,y,matrix.Color333(7,7,7));}
+      if (getMatrixValue(x,y,grid))    {matrix.drawPixel(x,y,matrix.Color333(7,7,7));}
     }
   }
 }
@@ -97,12 +144,12 @@ void draw_player()
   matrix.fillRect(posx,posy,2,2, matrix.Color333(0,7,0));
 }
 
-bool object_in_way(int x, int y, const int (&grid)[grid_size][grid_size])
+bool object_in_way(int x, int y, const uint32_t (&grid)[grid_size])
 {
-  if (grid[y][x])     {return 1;}
-  if (grid[y][x+1])   {return 1;}
-  if (grid[y+1][x])   {return 1;}
-  if (grid[y+1][x+1]) {return 1;}
+  if (getMatrixValue(x,y,grid))     {return 1;}
+  if (getMatrixValue(x+1,y,grid))   {return 1;}
+  if (getMatrixValue(x,y+1,grid))   {return 1;}
+  if (getMatrixValue(x+1,y+1,grid)) {return 1;}
 
   return 0;
 }
@@ -120,7 +167,7 @@ bool check_if_done(int x, int y)
   }
 }
 
-void get_input(const int (&grid)[grid_size][grid_size])
+void get_input(const uint32_t (&grid)[grid_size])
 {
   lastposx = posx;
   lastposy = posy;
@@ -186,7 +233,7 @@ void draw_border()
   }
 }
 
-void generate_coins(const int (&grid)[grid_size][grid_size])
+void generate_coins(const uint32_t (&grid)[grid_size])
 {
   long randomNumber;
   int x;
@@ -198,10 +245,10 @@ void generate_coins(const int (&grid)[grid_size][grid_size])
     int r = int(randomNumber);
     pos_from_num(x, y, r);
 
-    if (grid[y][x] != 1 && coinGrid[y][x] == 0)
+    if (getMatrixValue(x,y,grid) != 1 && getMatrixValue(x,y,grid) == 0)
     { 
       matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
-      coinGrid[y][x] = 1; // Markerer at en mynt er plassert her
+      setMatrixValue(x,y,1,coinGrid);
     }
     else
     {
@@ -211,21 +258,10 @@ void generate_coins(const int (&grid)[grid_size][grid_size])
 }
 void check_coin()
 {
-  if (coinGrid[posy][posx] == 1)      {++collected_coins; coinGrid[posy][posx] += 1;}
-  if (coinGrid[posy+1][posx] == 1)    {++collected_coins; coinGrid[posy+1][posx] += 1;}
-  if (coinGrid[posy][posx+1] == 1)    {++collected_coins; coinGrid[posy][posx+1] += 1;}
-  if (coinGrid[posy+1][posx+1] == 1)  {++collected_coins; coinGrid[posy+1][posx+1] += 1;}
-}
-
-void reset_coins()
-{
-  for (int i = 0; i < grid_size; i++)
-  {
-    for (int j = 0; j < grid_size; j++)
-    {
-        coinGrid[i][j] = 0;
-    }
-  }
+  if (getMatrixValue(posx,posy,coinGrid))      {++collected_coins; setMatrixValue(posx,posy,0,coinGrid);}
+  if (getMatrixValue(posx+1,posy,coinGrid))    {++collected_coins; setMatrixValue(posx+1,posy,0,coinGrid);}
+  if (getMatrixValue(posx,posy+1,coinGrid))    {++collected_coins; setMatrixValue(posx,posy+1,0,coinGrid);}
+  if (getMatrixValue(posx+1,posy+1,coinGrid))  {++collected_coins; setMatrixValue(posx+1,posy+1,0,coinGrid);}
 }
 
 void start_animation(int stage)
@@ -268,12 +304,20 @@ void reset_stage()
   total_coins = 20;
   collected_coins = 0;
   new_stage = false;
-  reset_coins();
 
   jump_sequence = 0;
 
   if (stage == 2) {draw_matrix(grid_1); draw_border(); generate_coins(grid_1);}  
 
+}
+void print_coins()
+{
+  matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+  matrix.setTextSize(1);     // size 1 == 8 pixels high
+  matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
+
+  matrix.setTextColor(matrix.Color333(7,7,7));
+  matrix.println(collected_coins);
 }
 
 void setup() {
@@ -293,12 +337,13 @@ void setup() {
   draw_matrix(grid_1);
   draw_border();
   generate_coins(grid_1);
-
 }
 
 void loop() {
-
-  get_input(grid_1);            // with the condition to "open" the door to the next level we can have checks and an integer to keep track of what grid we use.
+  
+  // print_coins();
+  if (stage == 1) {get_input(grid_1);}
+  if (stage == 2) {get_input(grid_1);}
   check_coin();
   draw_player();
   // matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
