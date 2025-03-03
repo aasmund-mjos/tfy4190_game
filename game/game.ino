@@ -292,6 +292,38 @@ void reset_animation()
 
 }
 
+void start_cut_scene()
+{
+  delay(500);
+  matrix.drawPixel(13, 31, matrix.Color333(0,0,0));
+  matrix.drawPixel(14, 31, matrix.Color333(0,0,0));
+  matrix.drawPixel(15, 31, matrix.Color333(0,0,0));
+  matrix.drawPixel(16, 31, matrix.Color333(0,0,0));
+  delay(500);
+  matrix.drawPixel(14, 31, matrix.Color333(0,7,0));
+  matrix.drawPixel(15, 31, matrix.Color333(0,7,0));
+  delay(100);
+  matrix.drawPixel(14, 30, matrix.Color333(0,7,0));
+  matrix.drawPixel(15, 30, matrix.Color333(0,7,0));
+  delay(100);
+  draw_player();
+  matrix.drawPixel(14, 31, matrix.Color333(0,0,0));
+  matrix.drawPixel(15, 31, matrix.Color333(0,0,0));
+  delay(200);
+  posy-=1;
+  draw_player();
+  delay(100);
+  matrix.drawPixel(13, 31, matrix.Color333(7,0,0));
+  matrix.drawPixel(14, 31, matrix.Color333(7,0,0));
+  matrix.drawPixel(15, 31, matrix.Color333(7,0,0));
+  matrix.drawPixel(16, 31, matrix.Color333(7,0,0));
+  delay(100);
+  lastposy = posy;
+  posy += 1;
+  draw_player();
+  lastposy = posy;
+}  
+
 void reset_stage()
 {
   stage += 1;
@@ -309,17 +341,10 @@ void reset_stage()
 
   jump_sequence = 0;
 
-  if (stage == 2) {draw_matrix(grid_1); draw_border(); generate_coins(grid_1);}  
+  if (stage == 2) {draw_matrix(grid_1); draw_border(); generate_coins(grid_1);}
 
-}
-void print_coins()
-{
-  matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
-  matrix.setTextSize(1);     // size 1 == 8 pixels high
-  matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
+  start_cut_scene();
 
-  matrix.setTextColor(matrix.Color333(7,7,7));
-  matrix.println(collected_coins);
 }
 
 void setup() {
@@ -342,18 +367,12 @@ void setup() {
 }
 
 void loop() {
-  
-  // print_coins();
+
   if (stage == 1) {get_input(grid_1);}
   if (stage == 2) {get_input(grid_1);}
   check_coin();
   draw_player();
-  // matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
-  // matrix.setTextSize(1);     // size 1 == 8 pixels high
-  // matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
 
-  // matrix.setTextColor(matrix.Color333(7,7,7));
-  // matrix.println(collected_coins);
   if (collected_coins == total_coins)
   {
     matrix.drawPixel(grid_size-1,1,matrix.Color333(0,0,0));
