@@ -15,6 +15,7 @@
 #define B   A1
 #define C   A2
 #define D   A3
+#define audioPin 52
 
 const int grid_size = 32;
 int posx = grid_size/2-2;
@@ -23,7 +24,7 @@ int lastposx = posx;
 int lastposy = posy;
 int stage = 1;
 
-int total_coins = 20;
+int total_coins = 0;  // only for first level
 int collected_coins = 0;
 bool new_stage = false;
 
@@ -70,6 +71,41 @@ const uint32_t grid_1[grid_size] =
 0b11111111111111111111111111111111,
 0b10000000000000000000000000000001,
 0b10000000000000000000000000000001,
+0b10011111111110000000000000000111,
+0b10000000000000000111111111111111,
+0b10000000000000011100000000000111,
+0b10000000000001110000000000000011,
+0b10000000000111000000000000000001,
+0b10000000011100000000000000000001,
+0b10000001110000000000000000000001,
+0b11111000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b10000000000000000000110000000001,
+0b10011111110000000111110000000111,
+0b10001111100000000000000000000111,
+0b10000111000000000000000000011111,
+0b10000010000000000000001110011111,
+0b10000000000000000000001100001111,
+0b10000000000000000000001100000111,
+0b10000000000000000001111000000011,
+0b10000000000000000001110000000001,
+0b10000000000000000001100000000001,
+0b10000000000000000111000000000001,
+0b10000000000000000110000000000001,
+0b10000000000000011100000000000001,
+0b10000000000000011000000000000001,
+0b10011000000001110000000000000001,
+0b10011100000000000000000000000001,
+0b10011110000000000000000000000001,  
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b11111111111111111111111111111111};
+
+const uint32_t grid_2[grid_size] =
+{
+0b11111111111111111111111111111111,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
 0b10011100111010111000011100000111,
 0b10000100100000001110000000000011,
 0b10000111100000000000000000000001,
@@ -99,6 +135,34 @@ const uint32_t grid_1[grid_size] =
 0b10000000000000000000000000000001,
 0b10000000000000000000000000000001,
 0b11111111111111111111111111111111};
+
+void simple_melody()
+{
+  tone(audioPin, 523, 150); // C5
+  delay(200);
+  tone(audioPin, 659, 150); // E5
+  delay(200);
+  tone(audioPin, 784, 200); // G5
+  delay(250);
+  tone(audioPin, 880, 100); // A5
+  delay(150);
+  tone(audioPin, 784, 150); // G5
+  delay(200);
+  tone(audioPin, 659, 150); // E5
+  delay(200);
+  tone(audioPin, 523, 300); // C5
+  delay(350);
+  tone(audioPin, 392, 200); // G4
+  delay(250);
+  tone(audioPin, 440, 150); // A4
+  delay(200);
+  tone(audioPin, 494, 150); // B4
+  delay(200);
+  tone(audioPin, 523, 300); // C5
+  delay(350);
+
+  noTone(audioPin);
+}
 
 int getMatrixValue(int x, int y, const uint32_t (&grid)[grid_size]) {
     // Use bitwise operations to check if the xth bit in the yth row is 1
@@ -266,7 +330,7 @@ void check_coin()
   if (getMatrixValue(posx+1,posy+1,coinGrid))  {++collected_coins; setMatrixValue(posx+1,posy+1,0,coinGrid);}
 }
 
-void start_animation(int stage)
+void show_stage(int stage)
 {
   matrix.fillScreen(matrix.Color333(0,0,0));
   matrix.setCursor(10, 8);    // start at top left, with one pixel of spacing
@@ -275,7 +339,7 @@ void start_animation(int stage)
 
   matrix.setTextColor(matrix.Color333(7,7,7));
   matrix.println(stage);
-  delay(1000);
+  simple_melody();
 }
 
 void reset_animation()
@@ -288,11 +352,11 @@ void reset_animation()
   matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
   delay(500);
   matrix.fillScreen(matrix.Color333(0,0,0));
-  start_animation(stage);
+  show_stage(stage);
 
 }
 
-void start_cut_scene()
+void intro_animation()
 {
   delay(500);
   matrix.drawPixel(13, 31, matrix.Color333(0,0,0));
@@ -341,9 +405,9 @@ void reset_stage()
 
   jump_sequence = 0;
 
-  if (stage == 2) {draw_matrix(grid_1); draw_border(); generate_coins(grid_1);}
+  if (stage == 2) {draw_matrix(grid_2); draw_border(); generate_coins(grid_2);}
 
-  start_cut_scene();
+  intro_animation();
 
 }
 
@@ -359,27 +423,30 @@ void setup() {
   matrix.setCursor(1,13);
   matrix.println("Climb");
   draw_border();
-  delay(4000);
-  start_animation(stage);
+  simple_melody();
+  
+  show_stage(stage);
   draw_matrix(grid_1);
   draw_border();
-  generate_coins(grid_1);
+  // generate_coins(grid_1);
 }
 
 void loop() {
 
   if (stage == 1) {get_input(grid_1);}
-  if (stage == 2) {get_input(grid_1);}
+  if (stage == 2) {get_input(grid_2);}
   check_coin();
   draw_player();
 
   if (collected_coins == total_coins)
   {
+
     matrix.drawPixel(grid_size-1,1,matrix.Color333(0,0,0));
     matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
     collected_coins = -1;   // means that you can move to the next stage
   }
   if (new_stage)  {reset_stage();}
   delay(100);
+  // noTone(audioPin);
 
 }
