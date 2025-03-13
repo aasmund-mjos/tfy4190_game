@@ -1,4 +1,6 @@
 #include <RGBmatrixPanel.h>
+#include <EEPROM.h>
+#include <TimeLib.h>
 
 // Most of the signal pins are configurable, but the CLK pin has some
 // special constraints.  On 8-bit AVR boards it must be on PORTB...
@@ -16,6 +18,9 @@
 #define C   A2
 #define D   A3
 #define audioPin 52
+#define pressPin 40
+
+int start_t = now();
 
 const int grid_size = 32;
 int posx = grid_size/2-2;
@@ -352,8 +357,19 @@ void reset_animation()
   matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
   delay(500);
   matrix.fillScreen(matrix.Color333(0,0,0));
-  show_stage(stage);
-
+  if (stage!=3)
+  {
+    show_stage(stage);
+  }
+  else
+  {
+    draw_border();
+    matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+    matrix.setTextSize(1);     // size 1 == 8 pixels high
+    matrix.setTextWrap(false);
+    matrix.setTextColor(matrix.Color333(7,7,7));
+    matrix.print("Game");
+  }
 }
 
 void intro_animation()
@@ -405,15 +421,302 @@ void reset_stage()
 
   jump_sequence = 0;
 
-  if (stage == 2) {draw_matrix(grid_2); draw_border(); generate_coins(grid_2);}
-
-  intro_animation();
+  if (stage == 2) {draw_matrix(grid_2); draw_border(); generate_coins(grid_2); intro_animation();}
 
 }
 
+void clear_EEPROM()   // only use this when absolutely needed
+{
+  for (int i = 0; i < EEPROM.length(); ++i)
+  {
+    EEPROM.write(i,0);
+  }
+}
+
+// the setup of eeprom memory, 
+// Use 2 bytes to hold time, so maximum time is 2^(16) units of time, probably use seconds, that seems like a reasonable "frequency", 2^8 seconds (256) is probably a little slow, at least in the beginning
+// We can also do up to 256 minutes (byte 0) and up to 60 seconds(byte 1)
+// Since 1 byte is 256 possibilities, it's easy to implement that 1 byte can hold 9 letters, since we need 26 letters for english alphabet
+// Or we can just have one byte represent 1 letter, and allocate say 20 letters to each score, so that 1 score takes up 22 bytes
+// Then top 10 highscore only takes then 220 bytes, which is a lot less memory than the eeprom memory we have, so probably the best option
+// a time of 0 means that there is no-one occupying that place
+
+void ascii_name(char (&letters)[3], int (&numbers)[3])
+{
+  for (int i = 0; i < 3; ++i)
+  {
+    if (numbers[i]==0)  {letters[i] = ' ';}
+    else                {letters[i] = char(numbers[i]);}
+  }
+}
+
+void print_letters(char (&letters)[3])
+{
+  for (int i = 0; i < 3; ++i)
+  {
+    matrix.setCursor(1+(i)*10, 11);
+    matrix.print(letters[i]);
+  }
+}
+
+void get_name(int (&name)[3])
+{
+  int current_letter = 65;
+
+  for (int i = 0; i < 3; ++i)
+  {
+    bool found_letter = false;
+    char letters[3] = {0};
+
+    while (!found_letter)
+    {
+      matrix.fillScreen(matrix.Color333(0,0,0));
+      matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+      matrix.setTextSize(1);     // size 1 == 8 pixels high
+      matrix.setTextWrap(false);
+      matrix.setTextColor(matrix.Color333(7,7,7));
+      ascii_name(letters, name);
+      matrix.println("Name");
+      print_letters(letters);
+      matrix.setCursor(7, 21);
+      if (current_letter != 91 and current_letter != 92)
+      {
+        matrix.print(char(current_letter));
+      }
+      else {
+        if (current_letter == 91)
+        {
+          matrix.print("Done");
+        }
+        else
+        {
+          matrix.print("Back");
+        }
+      }
+
+      delay(200);
+
+
+      if (digitalRead(pressPin) == LOW)
+      {
+
+        if (current_letter == 91) {name[i] = 0;}
+        else
+        {
+          if (current_letter == 92) {name[i] = 0; if (i > 0) {name[i-1] = 0; i-=2;}}
+          else                      {name[i] = current_letter;}
+        }
+        found_letter = true;
+      }
+      else
+      {
+        int y_val = analogRead(A5);
+        if (y_val < 400)  {current_letter+=1;}
+        if (y_val > 600)  {current_letter-=1;}
+
+        if (current_letter < 65)  {current_letter = 92;}
+        if (current_letter > 92)  {current_letter = 65;}
+      }
+    }
+
+    if (current_letter == 91) {break;}
+
+  }
+}
+
+void high_score_names()
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  for (int i = 0; i < 4; ++i)
+  {
+    matrix.setCursor(1, i*8);    // start at top left, with one pixel of spacing
+    matrix.setTextSize(1);     // size 1 == 8 pixels high
+    matrix.setTextWrap(false);
+    matrix.setTextColor(matrix.Color333(7,7,7));
+    matrix.print(i+1);
+    matrix.setCursor(12, i*8);
+    char name[3] = {};
+    for (int j = 0; j < 3; ++j)
+    {
+      if (EEPROM.read(5*i+2+j) == 0)  {name[j] = ' ';}
+      else                            {name[j] = char(EEPROM.read(5*i+2+j));}
+      matrix.setCursor(12+j*6, i*8);
+      matrix.print(name[j]);
+    }
+  }
+}
+
+void high_score_numbers()
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  for (int i = 0; i < 4; ++i)
+  {
+    matrix.setCursor(1, i*8);    // start at top left, with one pixel of spacing
+    matrix.setTextSize(1);     // size 1 == 8 pixels high
+    matrix.setTextWrap(false);
+    matrix.setTextColor(matrix.Color333(7,7,7));
+    matrix.print(i+1);
+    matrix.setCursor(12, i*8);
+    matrix.print(EEPROM.read(5*i));
+    matrix.fillRect(18,(i+1)*8-1,1,1,matrix.Color333(7,7,7));
+    matrix.setCursor(20,i*8);
+    matrix.print(EEPROM.read(5*i+1));
+  }
+}
+
+void view_high_score()
+{
+  int i = 0;
+  high_score_names();
+  delay(1000);
+
+  while(true)
+  {
+    if (digitalRead(pressPin) == LOW)
+    {
+      i+=1; if (i%2) {high_score_numbers();} else {high_score_names();}
+      delay(20);
+      int num = 0;
+      for (int j = 0; j < 50; ++j)
+      {
+        if (digitalRead(pressPin) == LOW) {++num;}
+        delay(20);
+      }
+      if (num == 50)  {break;}
+    }
+  }
+}
+
+void losers_message()
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  matrix.setCursor(1, 3);
+  matrix.setTextSize(1);
+  matrix.print("Not");
+  matrix.setCursor(1, 12);
+  matrix.print("Good");
+  matrix.setCursor(1, 21);
+  matrix.print("Yet");
+  delay(1000);
+  while(true)
+  {
+    if (digitalRead(pressPin) == LOW)
+    {
+      break;
+    }
+  }
+}
+
+void winnners_message()
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  matrix.setCursor(1,3);
+  matrix.setTextSize(1);
+  matrix.print("You");
+  matrix.setCursor(1, 12);
+  matrix.print("Are");
+  matrix.setCursor(1, 21);
+  matrix.print("Good");
+  delay(1000);
+  while(true)
+  {
+    if (digitalRead(pressPin) == LOW)
+    {
+      break;
+    }
+  }
+}
+
+void end_screen()
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  matrix.setCursor(1,3);
+  matrix.setTextSize(1);
+  matrix.print("The");
+  matrix.setCursor(1, 12);
+  matrix.print("End");
+}
+
+void new_score(int total_seconds)
+{
+  int minutes = total_seconds / 60;
+  int seconds = total_seconds % 60;
+  int push = 4;
+
+  bool empty_slot = false;
+
+  for (int i = 0; i < 4; ++i)
+  {
+    if (EEPROM.read(5*i) == 0 and EEPROM.read(5*i+1) == 0)
+    {
+      push = i;
+      empty_slot = true;
+      break;
+    }
+  }
+
+  if (!empty_slot)
+  {
+    for (int i = 3; i >= 0; --i)
+    {
+      if (EEPROM.read(5*i) > minutes or (EEPROM.read(5*i) == minutes and EEPROM.read(5*i+1) > seconds))
+      {
+        push = i;
+      }
+
+      else
+      {
+        break;
+      }
+    }
+  }
+
+  if (push<4)
+  {
+
+    winnners_message();
+
+    int name[3] = {};
+    get_name(name);   // get name from players input
+
+    for (int i = 3; i > push; --i)
+    {
+      EEPROM.write(5*i,EEPROM.read(5*(i-1)));
+      EEPROM.write(5*i+1,EEPROM.read(5*(i-1)+1));
+      for (int j = 0; j < 3; ++j)
+      {
+        EEPROM.write(5*i+2+j,EEPROM.read(5*(i-1)+2+j));
+      }
+    }
+
+    EEPROM.write(5*push,minutes);
+    EEPROM.write(5*push+1,seconds);
+
+    for (int j = 0; j < 3; ++j)
+    {
+      EEPROM.write(5*push+2+j,name[j]);
+    }
+
+  }
+
+  else
+  {
+    losers_message();
+  }
+
+  view_high_score();
+
+
+}
+
+
 void setup() {
 
+  pinMode(pressPin, INPUT_PULLUP);
   matrix.begin();
+
+  matrix.fillScreen(matrix.Color333(0,0,0));
+
   matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
   matrix.setTextSize(1);     // size 1 == 8 pixels high
   matrix.setTextWrap(false); // Don't wrap at end of line - will do ourselves
@@ -429,12 +732,14 @@ void setup() {
   draw_matrix(grid_1);
   draw_border();
   // generate_coins(grid_1);
+
 }
 
 void loop() {
 
   if (stage == 1) {get_input(grid_1);}
   if (stage == 2) {get_input(grid_2);}
+  if (stage == 3) {new_score(now()-start_t); end_screen(); while(true){;}}
   check_coin();
   draw_player();
 
