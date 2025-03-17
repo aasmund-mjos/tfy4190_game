@@ -361,15 +361,6 @@ void reset_animation()
   {
     show_stage(stage);
   }
-  else
-  {
-    draw_border();
-    matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
-    matrix.setTextSize(1);     // size 1 == 8 pixels high
-    matrix.setTextWrap(false);
-    matrix.setTextColor(matrix.Color333(7,7,7));
-    matrix.print("Game");
-  }
 }
 
 void intro_animation()
@@ -463,63 +454,102 @@ void get_name(int (&name)[3])
 {
   int current_letter = 65;
 
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < 4; ++i)
   {
-    bool found_letter = false;
     char letters[3] = {0};
-
-    while (!found_letter)
+    if (i!=3)
     {
-      matrix.fillScreen(matrix.Color333(0,0,0));
-      matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
-      matrix.setTextSize(1);     // size 1 == 8 pixels high
-      matrix.setTextWrap(false);
-      matrix.setTextColor(matrix.Color333(7,7,7));
-      ascii_name(letters, name);
-      matrix.println("Name");
-      print_letters(letters);
-      matrix.setCursor(7, 21);
-      if (current_letter != 91 and current_letter != 92)
+      bool found_letter = false;
+
+      while (!found_letter)
       {
-        matrix.print(char(current_letter));
-      }
-      else {
-        if (current_letter == 91)
+        matrix.fillScreen(matrix.Color333(0,0,0));
+        matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+        matrix.setTextSize(1);     // size 1 == 8 pixels high
+        matrix.setTextWrap(false);
+        matrix.setTextColor(matrix.Color333(7,7,7));
+        ascii_name(letters, name);
+        matrix.println("Name");
+        print_letters(letters);
+        matrix.setCursor(7, 21);
+        if (current_letter != 91 and current_letter != 92)
         {
-          matrix.print("Done");
+          matrix.print(char(current_letter));
+        }
+        else {
+          if (current_letter == 91)
+          {
+            matrix.print("Done");
+          }
+          else
+          {
+            matrix.print("Back");
+          }
+        }
+
+        delay(200);
+
+
+        if (digitalRead(pressPin) == LOW)
+        {
+
+          if (current_letter == 91) {name[i] = 0;}
+          else
+          {
+            if (current_letter == 92) {name[i] = 0; if (i > 0) {name[i-1] = 0; i-=2;}}
+            else                      {name[i] = current_letter;}
+          }
+          found_letter = true;
         }
         else
         {
-          matrix.print("Back");
+          int y_val = analogRead(A5);
+          if (y_val < 400)  {current_letter+=1;}
+          if (y_val > 600)  {current_letter-=1;}
+
+          if (current_letter < 65)  {current_letter = 92;}
+          if (current_letter > 92)  {current_letter = 65;}
         }
       }
+    }
 
-      delay(200);
-
-
-      if (digitalRead(pressPin) == LOW)
+    else
+    {
+      bool finito = false;
+      int what = 0;
+      while (!finito)
       {
+        matrix.fillScreen(matrix.Color333(0,0,0));
+        matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
+        matrix.setTextSize(1);     // size 1 == 8 pixels high
+        matrix.setTextWrap(false);
+        matrix.setTextColor(matrix.Color333(7,7,7));
+        ascii_name(letters, name);
+        matrix.println("Name");
+        print_letters(letters);
+        matrix.setCursor(7, 21);
+        if (what%2)   {matrix.print("Done");}
+        else          {matrix.print("Back");}
 
-        if (current_letter == 91) {name[i] = 0;}
+        delay(200);
+
+        if (digitalRead(pressPin) == LOW)
+        {
+          finito = true;
+          if (what%2==0) {i = 1; name[2] = 0;}
+        }
+
         else
         {
-          if (current_letter == 92) {name[i] = 0; if (i > 0) {name[i-1] = 0; i-=2;}}
-          else                      {name[i] = current_letter;}
+          int y_val = analogRead(A5);
+          if (y_val < 400)  {what+=1;}
+          if (y_val > 600)  {what+=1;}
         }
-        found_letter = true;
-      }
-      else
-      {
-        int y_val = analogRead(A5);
-        if (y_val < 400)  {current_letter+=1;}
-        if (y_val > 600)  {current_letter-=1;}
-
-        if (current_letter < 65)  {current_letter = 92;}
-        if (current_letter > 92)  {current_letter = 65;}
       }
     }
 
     if (current_letter == 91) {break;}
+
 
   }
 }
@@ -587,16 +617,20 @@ void view_high_score()
   }
 }
 
-void losers_message()
+void losers_message(int minutes, int seconds)
 {
   matrix.fillScreen(matrix.Color333(0,0,0));
-  matrix.setCursor(1, 3);
+  draw_border();
+  matrix.setCursor(4, 3);
   matrix.setTextSize(1);
-  matrix.print("Not");
-  matrix.setCursor(1, 12);
-  matrix.print("Good");
-  matrix.setCursor(1, 21);
-  matrix.print("Yet");
+  matrix.print("Nice");
+  matrix.setCursor(4, 12);
+  matrix.print("Try!");
+  matrix.setCursor(3, 21);
+  matrix.print(minutes);
+  matrix.fillRect(10,28,1,1,matrix.Color333(7,7,7));
+  matrix.setCursor(12, 21);
+  matrix.print(seconds);
   delay(1000);
   while(true)
   {
@@ -607,16 +641,20 @@ void losers_message()
   }
 }
 
-void winnners_message()
+void winnners_message(int minutes, int seconds)
 {
   matrix.fillScreen(matrix.Color333(0,0,0));
-  matrix.setCursor(1,3);
+  draw_border();
+  matrix.setCursor(4,3);
   matrix.setTextSize(1);
-  matrix.print("You");
-  matrix.setCursor(1, 12);
-  matrix.print("Are");
-  matrix.setCursor(1, 21);
   matrix.print("Good");
+  matrix.setCursor(3, 12);
+  matrix.print("Time!");
+  matrix.setCursor(3, 21);
+  matrix.print(minutes);
+  matrix.fillRect(10,28,1,1,matrix.Color333(7,7,7));
+  matrix.setCursor(12, 21);
+  matrix.print(seconds);
   delay(1000);
   while(true)
   {
@@ -630,10 +668,11 @@ void winnners_message()
 void end_screen()
 {
   matrix.fillScreen(matrix.Color333(0,0,0));
-  matrix.setCursor(1,3);
+  draw_border();
+  matrix.setCursor(6,3);
   matrix.setTextSize(1);
   matrix.print("The");
-  matrix.setCursor(1, 12);
+  matrix.setCursor(6, 12);
   matrix.print("End");
 }
 
@@ -674,7 +713,7 @@ void new_score(int total_seconds)
   if (push<4)
   {
 
-    winnners_message();
+    winnners_message(minutes, seconds);
 
     int name[3] = {};
     get_name(name);   // get name from players input
@@ -701,7 +740,7 @@ void new_score(int total_seconds)
 
   else
   {
-    losers_message();
+    losers_message(minutes, seconds);
   }
 
   view_high_score();
