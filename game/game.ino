@@ -35,6 +35,12 @@ bool new_stage = false;
 
 int jump_sequence = 0;
 
+unsigned long lastDropTime = 0;
+const int dropInterval = 7000;  
+const int lavaTapX = 11;         // X-position of the lava "tap"
+const int lavaTapY = 16;         // Y-position of the lava source
+const int lavaPoolY = grid_size - 4; // Y-position of the lava pool
+
 uint32_t coinGrid[grid_size] =
 {
 0b00000000000000000000000000000000,
@@ -65,6 +71,41 @@ uint32_t coinGrid[grid_size] =
 0b00000000000000000000000000000000,
 0b00000000000000000000000000000000,
 0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000
+};
+uint32_t lavaGrid[grid_size] =
+{
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000011100000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000001111100000000000000000,
+0b00000000000100000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000111111100000000000000000000,
 0b00000000000000000000000000000000,
 0b00000000000000000000000000000000,
 0b00000000000000000000000000000000,
@@ -141,6 +182,42 @@ const uint32_t grid_2[grid_size] =
 0b10000000000000000000000000000001,
 0b11111111111111111111111111111111};
 
+const uint32_t grid_3[grid_size] =
+{
+0b11111111111111111111111111111111,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b10000000000010111000011100000111,
+0b10000100010000001110000000000011,
+0b11000011100000000000000000000001,
+0b10000000000000000000000001100001,
+0b10000000000000000000000000000001,
+0b10000011111000001111000000000001,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b10000000000011000000000000000001,
+0b11110101010000000000011111000001,
+0b10000000000000000000000000000011,
+0b10000000000000000000000000000111,
+0b10000000010000010000011100000001,
+0b10000000111011100000000000000001,
+0b10000000000000000000000000000001,
+0b11000000000000000000000000000011,
+0b11110010101010101000001110000001,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000111111,
+0b10000010000010000000000000000001,
+0b11000000000000000011100000000001,
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b10001000000010000000000001000001,
+0b10000111111100000001111110000001,  
+0b10000000000000000000000000000001,
+0b10000000000000000000000000000001,
+0b11111111111111111111111111111111};
+
+
 void simple_melody()
 {
   tone(audioPin, 523, 150); // C5
@@ -166,6 +243,18 @@ void simple_melody()
   tone(audioPin, 523, 300); // C5
   delay(350);
 
+  noTone(audioPin);
+}
+
+void jump_sound() {
+  tone(audioPin, 400, 30);  // Start low
+  delay(30);
+  tone(audioPin, 500, 30);
+  delay(30);
+  tone(audioPin, 600, 40);  // Quickly rise in pitch
+  delay(40);
+  tone(audioPin, 700, 50);
+  delay(50);
   noTone(audioPin);
 }
 
@@ -273,7 +362,7 @@ void get_input(const uint32_t (&grid)[grid_size])
     {
       if (y_val > 550)  // initiate jump
       {
-        if (!object_in_way(posx,posy-1, grid))     {posy-=1;   jump_sequence=1;}  // initiate jump
+        if (!object_in_way(posx,posy-1, grid))     {posy-=1;   jump_sequence=1; jump_sound();}  // initiate jump
       }
     }
   }
@@ -327,6 +416,18 @@ void generate_coins(const uint32_t (&grid)[grid_size])
     }
   }
 }
+
+void draw_lava(const uint32_t (&grid)[grid_size])
+{
+  for (int x = 0; x < grid_size; ++x)
+  {
+    for (int y = 0; y < grid_size; ++y)
+    {
+      if (getMatrixValue(x,y,grid))    {matrix.drawPixel(x,y,matrix.Color333(6,2,0));}
+    }
+  }
+}
+
 void check_coin()
 {
   if (getMatrixValue(posx,posy,coinGrid))      {++collected_coins; setMatrixValue(posx,posy,0,coinGrid);}
@@ -334,6 +435,44 @@ void check_coin()
   if (getMatrixValue(posx,posy+1,coinGrid))    {++collected_coins; setMatrixValue(posx,posy+1,0,coinGrid);}
   if (getMatrixValue(posx+1,posy+1,coinGrid))  {++collected_coins; setMatrixValue(posx+1,posy+1,0,coinGrid);}
 }
+
+void check_lava()
+{
+  if (getMatrixValue(posx,posy,lavaGrid))      {reset_stage();}
+  if (getMatrixValue(posx+1,posy,lavaGrid))    {reset_stage();}
+  if (getMatrixValue(posx,posy+1,lavaGrid))    {reset_stage();}
+  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {reset_stage();}
+  if (getMatrixValue(posx,posy-1,lavaGrid))    {reset_stage();}
+  if (getMatrixValue(posx+1,posy-1,lavaGrid))  {reset_stage();}
+}
+
+void drop_lava() {
+    static int lavaY = lavaTapY;  
+    static bool dropping = false; 
+
+  
+      delay(200);
+      unsigned long currentTime = now();
+
+      if (!dropping && (currentTime - lastDropTime >= dropInterval)) {
+          lavaY = lavaTapY;  // Reset the drop position after 7 seconds
+          dropping = true;
+          lastDropTime = currentTime;
+      }
+
+      if (dropping) {
+          // Clear previous lava drop position
+          setMatrixValue(lavaTapX, lavaY, 0, lavaGrid);
+
+          if (lavaY < lavaPoolY) {
+              lavaY++;  // Move the drop down
+              setMatrixValue(lavaTapX, lavaY, 1, lavaGrid);
+          } else {
+              dropping = false; // Stop when reaching the lava pool
+          }
+      }
+}
+
 
 void show_stage(int stage)
 {
@@ -357,7 +496,7 @@ void reset_animation()
   matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
   delay(500);
   matrix.fillScreen(matrix.Color333(0,0,0));
-  if (stage!=3)
+  if (stage!=4)
   {
     show_stage(stage);
   }
@@ -422,6 +561,7 @@ void reset_stage()
   jump_sequence = 0;
 
   if (stage == 2) {draw_matrix(grid_2); draw_border(); generate_coins(grid_2); intro_animation();}
+  if (stage == 3) {draw_matrix(grid_3); draw_border(); intro_animation(); draw_lava(lavaGrid); total_coins = 0;}
 
 }
 
@@ -739,8 +879,10 @@ void loop() {
 
   if (stage == 1) {get_input(grid_1);}
   if (stage == 2) {get_input(grid_2);}
-  if (stage == 3) {new_score(now()-start_t); end_screen(); while(true){;}}
+  if (stage == 3) {get_input(grid_3); drop_lava();}
+  if (stage == 4) {new_score(now()-start_t); end_screen(); while(true){;}}
   check_coin();
+  check_lava();
   draw_player();
 
   if (collected_coins == total_coins)
