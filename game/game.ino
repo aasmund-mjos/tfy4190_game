@@ -411,7 +411,7 @@ void generate_coins(const uint32_t (&grid)[grid_size])
 }
 
 void draw_lava(const uint32_t (&grid)[grid_size])
-{
+{ 
   for (int x = 0; x < grid_size; ++x)
   {
     for (int y = 0; y < grid_size; ++y)
@@ -440,8 +440,6 @@ void check_lava()
 }
 
 void drop_lava() {
-    int lavaY = lavaTapY;  
-    bool dropping = false;
 
     unsigned long currentTime = now();
     if (currentTime - lastDropTime >= 2) {
@@ -562,7 +560,8 @@ void reset_stage()
   jump_sequence = 0;
 
   if (stage == 2) {draw_matrix(grid_2); draw_border(); generate_coins(grid_2); intro_animation();}
-  if (stage == 3) {draw_matrix(grid_3); draw_border(); intro_animation(); draw_lava(lavaGrid); total_coins = 0;}
+  if (stage == 3) {draw_matrix(grid_3); draw_border(); intro_animation(); draw_lava(lavaGrid); total_coins = 0; int lavaY = lavaTapY;  
+    bool dropping = false;}
 
 }
 
