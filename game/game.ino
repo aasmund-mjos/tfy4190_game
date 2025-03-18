@@ -438,12 +438,12 @@ void check_coin()
 
 void check_lava()
 {
-  if (getMatrixValue(posx,posy,lavaGrid))      {reset_stage();}
-  if (getMatrixValue(posx+1,posy,lavaGrid))    {reset_stage();}
-  if (getMatrixValue(posx,posy+1,lavaGrid))    {reset_stage();}
-  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {reset_stage();}
-  if (getMatrixValue(posx,posy-1,lavaGrid))    {reset_stage();}
-  if (getMatrixValue(posx+1,posy-1,lavaGrid))  {reset_stage();}
+  if (getMatrixValue(posx,posy,lavaGrid))      {reset_stage(); lavaDrownSound();}
+  if (getMatrixValue(posx+1,posy,lavaGrid))    {reset_stage(); lavaDrownSound();}
+  if (getMatrixValue(posx,posy+1,lavaGrid))    {reset_stage(); lavaDrownSound();}
+  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {reset_stage(); lavaDrownSound();}
+  if (getMatrixValue(posx,posy-1,lavaGrid))    {reset_stage(); lavaDrownSound();}
+  if (getMatrixValue(posx+1,posy-1,lavaGrid))  {reset_stage(); lavaDrownSound();}
 }
 
 void drop_lava() {
@@ -473,6 +473,23 @@ void drop_lava() {
       }
 }
 
+void lavaDrownSound() {
+    // Random bubbling effect
+    for (int i = 0; i < 5; i++) {
+        int freq = random(200, 400); // Random bubble pitch
+        tone(audioPin, freq, 50);
+        delay(random(50, 100)); // Irregular delay
+    }
+
+    // Gurgling descent
+    for (int freq = 500; freq >= 100; freq -= 50) {
+        tone(audioPin, freq, 40);
+        delay(50);
+    }
+
+    // Abrupt cutoff to simulate drowning
+    noTone(audioPin);
+}
 
 void show_stage(int stage)
 {
