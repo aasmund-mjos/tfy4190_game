@@ -36,10 +36,11 @@ bool new_stage = false;
 int jump_sequence = 0;
 
 unsigned long lastDropTime = 0;
-const int dropInterval = 7000;  
+const int dropInterval = 7;  
 const int lavaTapX = 11;         // X-position of the lava "tap"
 const int lavaTapY = 16;         // Y-position of the lava source
 const int lavaPoolY = grid_size - 4; // Y-position of the lava pool
+ 
 
 uint32_t coinGrid[grid_size] =
 {
@@ -246,18 +247,6 @@ void simple_melody()
   noTone(audioPin);
 }
 
-void jump_sound() {
-  tone(audioPin, 400, 30);  // Start low
-  delay(30);
-  tone(audioPin, 500, 30);
-  delay(30);
-  tone(audioPin, 600, 40);  // Quickly rise in pitch
-  delay(40);
-  tone(audioPin, 700, 50);
-  delay(50);
-  noTone(audioPin);
-}
-
 int getMatrixValue(int x, int y, const uint32_t (&grid)[grid_size]) {
     // Use bitwise operations to check if the xth bit in the yth row is 1
     return (grid[y] >> (31-x)) & 1;
@@ -338,13 +327,17 @@ void get_input(const uint32_t (&grid)[grid_size])
   {
     if (jump_sequence == 1 or jump_sequence == 3)
     {
-      if (!object_in_way(posx,posy-1, grid))                {posy-=1;}
+      if (!object_in_way(posx,posy-1, grid))                {posy-=1; if (jump_sequence == 3) {tone(audioPin, 500, 30);}}
       else                                                  {jump_sequence = 4;}  // should go to 5, but since we increment jump sequence, we say 4
     }
 
     if (jump_sequence == 7 or jump_sequence == 9 or jump_sequence == 10)
     {
-      if (!object_in_way(posx, posy+1, grid))   {posy+=1;}
+      if (!object_in_way(posx, posy+1, grid))   {posy+=1; 
+      if (jump_sequence == 7) {tone(audioPin, 600, 40);}
+      if (jump_sequence == 9) {tone(audioPin, 700, 50);}
+      else {noTone(audioPin);}
+      }
       else                                      {jump_sequence = 10;}     // finalize jump sequence
     }
 
@@ -362,7 +355,7 @@ void get_input(const uint32_t (&grid)[grid_size])
     {
       if (y_val > 550)  // initiate jump
       {
-        if (!object_in_way(posx,posy-1, grid))     {posy-=1;   jump_sequence=1; jump_sound();}  // initiate jump
+        if (!object_in_way(posx,posy-1, grid))     {posy-=1;   jump_sequence=1; tone(audioPin, 400, 30);}  // initiate jump
       }
     }
   }
@@ -438,40 +431,40 @@ void check_coin()
 
 void check_lava()
 {
-  if (getMatrixValue(posx,posy,lavaGrid))      {reset_stage(); lavaDrownSound();}
-  if (getMatrixValue(posx+1,posy,lavaGrid))    {reset_stage(); lavaDrownSound();}
-  if (getMatrixValue(posx,posy+1,lavaGrid))    {reset_stage(); lavaDrownSound();}
-  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {reset_stage(); lavaDrownSound();}
-  if (getMatrixValue(posx,posy-1,lavaGrid))    {reset_stage(); lavaDrownSound();}
-  if (getMatrixValue(posx+1,posy-1,lavaGrid))  {reset_stage(); lavaDrownSound();}
+  if (getMatrixValue(posx,posy,lavaGrid))      {lavaDrownSound(); stage -=1; reset_stage();}
+  if (getMatrixValue(posx+1,posy,lavaGrid))    {lavaDrownSound(); stage -=1; reset_stage();}
+  if (getMatrixValue(posx,posy+1,lavaGrid))    {lavaDrownSound(); stage -=1; reset_stage();}
+  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {lavaDrownSound(); stage -=1; reset_stage();}
+  if (getMatrixValue(posx,posy+2,lavaGrid))    {lavaDrownSound(); stage -=1; reset_stage();}
+  if (getMatrixValue(posx+1,posy+2,lavaGrid))  {lavaDrownSound(); stage -=1; reset_stage();}
 }
 
 void drop_lava() {
-    static int lavaY = lavaTapY;  
-    static bool dropping = false; 
+    int lavaY = lavaTapY;  
+    bool dropping = false;
 
-  
-      delay(200);
-      unsigned long currentTime = now();
+    unsigned long currentTime = now();
+    if (currentTime - lastDropTime >= 2) {
+        if (!dropping && (currentTime - lastDropTime >= dropInterval)) {
+            lavaY = lavaTapY;  // Reset the drop position after 7 seconds
+            dropping = true;
+            lastDropTime = currentTime;
+        }
 
-      if (!dropping && (currentTime - lastDropTime >= dropInterval)) {
-          lavaY = lavaTapY;  // Reset the drop position after 7 seconds
-          dropping = true;
-          lastDropTime = currentTime;
-      }
+        if (dropping) {
+            // Clear previous lava drop position
+            setMatrixValue(lavaTapX, lavaY, 0, lavaGrid);
 
-      if (dropping) {
-          // Clear previous lava drop position
-          setMatrixValue(lavaTapX, lavaY, 0, lavaGrid);
-
-          if (lavaY < lavaPoolY) {
-              lavaY++;  // Move the drop down
-              setMatrixValue(lavaTapX, lavaY, 1, lavaGrid);
-          } else {
-              dropping = false; // Stop when reaching the lava pool
-          }
-      }
-}
+            if (lavaY < lavaPoolY) {
+                lavaY++;  // Move the drop down
+                setMatrixValue(lavaTapX, lavaY, 1, lavaGrid);
+                draw_lava();
+            } else {
+                dropping = false; // Stop when reaching the lava pool
+            }
+        }
+    }
+} 
 
 void lavaDrownSound() {
     // Random bubbling effect
@@ -935,10 +928,9 @@ void loop() {
 
   if (stage == 1) {get_input(grid_1);}
   if (stage == 2) {get_input(grid_2);}
-  if (stage == 3) {get_input(grid_3); drop_lava();}
+  if (stage == 3) {get_input(grid_3); drop_lava(); check_lava();}
   if (stage == 4) {new_score(now()-start_t); end_screen(); while(true){;}}
   check_coin();
-  check_lava();
   draw_player();
 
   if (collected_coins == total_coins)
