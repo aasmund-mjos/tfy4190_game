@@ -31,16 +31,53 @@ int stage = 1;
 
 int total_coins = 0;  // only for first level
 int collected_coins = 0;
+int last_number_of_coins = 0;
 bool new_stage = false;
 
 int jump_sequence = 0;
+int lava_sequence = 0;
 
 unsigned long lastDropTime = 0;
-const int dropInterval = 7;  
+const int dropInterval = 5;  
 const int lavaTapX = 11;         // X-position of the lava "tap"
-const int lavaTapY = 16;         // Y-position of the lava source
-const int lavaPoolY = grid_size - 4; // Y-position of the lava pool
+const int lavaTapY = 15;         // Y-position of the lava source
+const int lavaPoolY = grid_size - 5; // Y-position of the lava pool
+int lavaY = lavaTapY;
  
+const uint32_t coinLavaGrid[grid_size] = 
+{
+0b00000000000000000000000000000000,
+0b01000000000010000000000000000000,
+0b00000000000000000000001000000010,
+0b00000000000000000000000000000000,
+0b01000000000000000000000000000000,
+0b00000100000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000100000000000100,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000001000000000000000000,
+0b01000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b01000000000010000000010000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000010,
+0b00000000000000000000000000000000,
+0b01000000000000000000000000000000,
+0b00000000000000000001000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000100000000000000000001000,
+0b00000000000000000000000000000000,
+0b00100000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,  
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000010,
+0b00000000000000000000000000000000};
 
 uint32_t coinGrid[grid_size] =
 {
@@ -194,10 +231,10 @@ const uint32_t grid_3[grid_size] =
 0b10000000000000000000000001100001,
 0b10000000000000000000000000000001,
 0b10000011111000001111000000000001,
+0b11000000000000000000000000000011,
 0b10000000000000000000000000000001,
-0b10000000000000000000000000000001,
-0b10000000000011000000000000000001,
-0b11110101010000000000011111000001,
+0b10000000100111000000000000000001,
+0b11110011000000000000011111000001,
 0b10000000000000000000000000000011,
 0b10000000000000000000000000000111,
 0b10000000010000010000011100000001,
@@ -212,8 +249,8 @@ const uint32_t grid_3[grid_size] =
 0b11000000000000000011100000000001,
 0b10000000000000000000000000000001,
 0b10000000000000000000000000000001,
-0b10001000000010000000000001000001,
-0b10000111111100000001111110000001,  
+0b10001000000010000000000000000001,
+0b10000111111100000011111110000001,  
 0b10000000000000000000000000000001,
 0b10000000000000000000000000000001,
 0b11111111111111111111111111111111};
@@ -333,11 +370,7 @@ void get_input(const uint32_t (&grid)[grid_size])
 
     if (jump_sequence == 7 or jump_sequence == 9 or jump_sequence == 10)
     {
-      if (!object_in_way(posx, posy+1, grid))   {posy+=1; 
-      if (jump_sequence == 7) {tone(audioPin, 600, 40);}
-      if (jump_sequence == 9) {tone(audioPin, 700, 50);}
-      else {noTone(audioPin);}
-      }
+      if (!object_in_way(posx, posy+1, grid))   {posy+=1;}
       else                                      {jump_sequence = 10;}     // finalize jump sequence
     }
 
@@ -388,6 +421,25 @@ void draw_border()
 
 void generate_coins(const uint32_t (&grid)[grid_size])
 {
+  if (stage==3)
+  {
+    for (int i = 0; i < grid_size; ++i)
+    {
+      coinGrid[i] = coinLavaGrid[i];
+    }
+    for (int x = 0; x < grid_size; ++x)
+    {
+      for (int y = 0; y < grid_size; ++y)
+      {
+        if (getMatrixValue(x,y,coinGrid) == 1)
+        {
+          matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
+        }
+      }
+    }
+    return;
+  }
+
   long randomNumber;
   int x;
   int y;
@@ -398,7 +450,7 @@ void generate_coins(const uint32_t (&grid)[grid_size])
     int r = int(randomNumber);
     pos_from_num(x, y, r);
 
-    if (getMatrixValue(x,y,grid) != 1 && getMatrixValue(x,y,grid) == 0)
+    if (getMatrixValue(x,y,grid) == 0 && getMatrixValue(x,y,coinGrid) == 0)
     { 
       matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
       setMatrixValue(x,y,1,coinGrid);
@@ -416,52 +468,68 @@ void draw_lava(const uint32_t (&grid)[grid_size])
   {
     for (int y = 0; y < grid_size; ++y)
     {
-      if (getMatrixValue(x,y,grid))    {matrix.drawPixel(x,y,matrix.Color333(6,2,0));}
+      if (getMatrixValue(x,y,grid))    {matrix.drawPixel(x,y,matrix.Color333(7,2,0));}
     }
   }
 }
 
 void check_coin()
 {
+  last_number_of_coins = collected_coins;
   if (getMatrixValue(posx,posy,coinGrid))      {++collected_coins; setMatrixValue(posx,posy,0,coinGrid);}
   if (getMatrixValue(posx+1,posy,coinGrid))    {++collected_coins; setMatrixValue(posx+1,posy,0,coinGrid);}
   if (getMatrixValue(posx,posy+1,coinGrid))    {++collected_coins; setMatrixValue(posx,posy+1,0,coinGrid);}
   if (getMatrixValue(posx+1,posy+1,coinGrid))  {++collected_coins; setMatrixValue(posx+1,posy+1,0,coinGrid);}
 }
 
-void check_lava()
+bool you_touched_lava()
 {
-  if (getMatrixValue(posx,posy,lavaGrid))      {lavaDrownSound(); stage -=1; reset_stage();}
-  if (getMatrixValue(posx+1,posy,lavaGrid))    {lavaDrownSound(); stage -=1; reset_stage();}
-  if (getMatrixValue(posx,posy+1,lavaGrid))    {lavaDrownSound(); stage -=1; reset_stage();}
-  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {lavaDrownSound(); stage -=1; reset_stage();}
-  if (getMatrixValue(posx,posy+2,lavaGrid))    {lavaDrownSound(); stage -=1; reset_stage();}
-  if (getMatrixValue(posx+1,posy+2,lavaGrid))  {lavaDrownSound(); stage -=1; reset_stage();}
+  lavaDrownSound(); 
+  if (lavaY!=lavaPoolY && lavaY != lavaTapY)
+  {
+    matrix.drawPixel(lavaTapX, lavaY, matrix.Color333(0,0,0));
+    setMatrixValue(lavaTapX, lavaY, 0, lavaGrid);
+  }
+  reset_stage_lava_edition();
+  return true;
+}
+
+bool check_lava()
+{
+  if (getMatrixValue(posx,posy,lavaGrid))      {return you_touched_lava();}
+  if (getMatrixValue(posx+1,posy,lavaGrid))    {return you_touched_lava();}
+  if (getMatrixValue(posx,posy+1,lavaGrid))    {return you_touched_lava();}
+  if (getMatrixValue(posx+1,posy+1,lavaGrid))  {return you_touched_lava();}
+  return false;
 }
 
 void drop_lava() {
 
-    unsigned long currentTime = now();
-    if (currentTime - lastDropTime >= 2) {
-        if (!dropping && (currentTime - lastDropTime >= dropInterval)) {
-            lavaY = lavaTapY;  // Reset the drop position after 7 seconds
-            dropping = true;
-            lastDropTime = currentTime;
-        }
-
-        if (dropping) {
-            // Clear previous lava drop position
-            setMatrixValue(lavaTapX, lavaY, 0, lavaGrid);
-
-            if (lavaY < lavaPoolY) {
-                lavaY++;  // Move the drop down
-                setMatrixValue(lavaTapX, lavaY, 1, lavaGrid);
-                draw_lava();
-            } else {
-                dropping = false; // Stop when reaching the lava pool
-            }
-        }
+  unsigned long currentTime = now();
+  ++lava_sequence;
+  if (lava_sequence%3==0)
+  {
+    if (currentTime - lastDropTime >= dropInterval)
+    {
+      lavaY = lavaTapY;  // Reset the drop position after 7 seconds
+      lastDropTime = currentTime;
     }
+    else
+    {
+      if (lavaY < lavaPoolY) 
+      {
+          if (lavaY!=lavaTapY)
+          {
+            setMatrixValue(lavaTapX, lavaY, 0, lavaGrid);
+            matrix.drawPixel(lavaTapX, lavaY, matrix.Color333(0,0,0));
+          }
+          lavaY++;  // Move the drop down
+          setMatrixValue(lavaTapX, lavaY, 1, lavaGrid);
+          matrix.drawPixel(lavaTapX, lavaY, matrix.Color333(7,2,0));
+      }
+
+    }
+  }
 } 
 
 void lavaDrownSound() {
@@ -560,9 +628,31 @@ void reset_stage()
   jump_sequence = 0;
 
   if (stage == 2) {draw_matrix(grid_2); draw_border(); generate_coins(grid_2); intro_animation();}
-  if (stage == 3) {draw_matrix(grid_3); draw_border(); intro_animation(); draw_lava(lavaGrid); total_coins = 0; int lavaY = lavaTapY;  
-    bool dropping = false;}
+  if (stage == 3) {draw_matrix(grid_3); draw_border(); generate_coins(grid_3); draw_lava(lavaGrid); intro_animation();}
 
+}
+
+void reset_stage_lava_edition()
+{
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  show_stage(stage);
+
+  posx = grid_size/2-2;
+  posy = grid_size-3;
+  lastposx = posx;
+  lastposy = posy;
+
+  total_coins = 20;
+  collected_coins = 0;
+  new_stage = false;
+  jump_sequence = 0;
+
+
+  draw_matrix(grid_3);
+  draw_border();
+  generate_coins(grid_3);
+  draw_lava(lavaGrid);
+  intro_animation();
 }
 
 void clear_EEPROM()   // only use this when absolutely needed
@@ -665,7 +755,7 @@ void get_name(int (&name)[3])
     else
     {
       bool finito = false;
-      int what = 0;
+      int what = 1;
       while (!finito)
       {
         matrix.fillScreen(matrix.Color333(0,0,0));
@@ -835,11 +925,20 @@ void new_score(int total_seconds)
 
   for (int i = 0; i < 4; ++i)
   {
-    if (EEPROM.read(5*i) == 0 and EEPROM.read(5*i+1) == 0)
+    if (EEPROM.read(5*i) > minutes or (EEPROM.read(5*i) == minutes and EEPROM.read(5*i+1) > seconds))
+      {
+        push = i;
+        empty_slot;
+        break;
+      }
+    else
     {
-      push = i;
-      empty_slot = true;
-      break;
+      if (EEPROM.read(5*i) == 0 and EEPROM.read(5*i+1) == 0)
+      {
+        push = i;
+        empty_slot = true;
+        break;
+      }
     }
   }
 
@@ -903,6 +1002,8 @@ void setup() {
   pinMode(pressPin, INPUT_PULLUP);
   matrix.begin();
 
+  // clear_EEPROM();  // if remove high score
+
   matrix.fillScreen(matrix.Color333(0,0,0));
 
   matrix.setCursor(1, 1);    // start at top left, with one pixel of spacing
@@ -927,20 +1028,32 @@ void loop() {
 
   if (stage == 1) {get_input(grid_1);}
   if (stage == 2) {get_input(grid_2);}
-  if (stage == 3) {get_input(grid_3); drop_lava(); check_lava();}
+  if (stage == 3) {get_input(grid_3); drop_lava();}
   if (stage == 4) {new_score(now()-start_t); end_screen(); while(true){;}}
+  if (stage == 3) {if (check_lava())  {return;}}
+
   check_coin();
   draw_player();
 
   if (collected_coins == total_coins)
   {
-
     matrix.drawPixel(grid_size-1,1,matrix.Color333(0,0,0));
     matrix.drawPixel(grid_size-1,2,matrix.Color333(0,0,0));
     collected_coins = -1;   // means that you can move to the next stage
   }
   if (new_stage)  {reset_stage();}
-  delay(100);
-  // noTone(audioPin);
-
+  if (collected_coins != last_number_of_coins)
+  {
+    tone(audioPin, 1500);
+    delay(49);
+    noTone(audioPin);
+    delay(1);
+    tone(audioPin, 1200);
+    delay(50);
+    noTone(audioPin);
+  }
+  else
+  {
+    delay(100);
+  }
 }
