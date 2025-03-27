@@ -913,6 +913,17 @@ void end_screen()
   matrix.print("The");
   matrix.setCursor(6, 12);
   matrix.print("End");
+  delay(2000);
+
+  matrix.fillScreen(matrix.Color333(0,0,0));
+  draw_border();
+  matrix.setCursor(6,3);
+  matrix.setTextSize(1);
+  matrix.print("Play");
+  matrix.setCursor(6, 12);
+  matrix.print("Agn?");
+
+  delay(2000);
   while(true) {
     if (digitalRead(pressPin)== LOW) {
         setup();
