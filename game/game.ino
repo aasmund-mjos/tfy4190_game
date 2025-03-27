@@ -114,6 +114,43 @@ uint32_t coinGrid[grid_size] =
 0b00000000000000000000000000000000,
 0b00000000000000000000000000000000
 };
+
+uint32_t coin_2_Grid[grid_size] =
+{
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000,
+0b00000000000000000000000000000000
+};
+
 uint32_t lavaGrid[grid_size] =
 {
 0b00000000000000000000000000000000,
@@ -439,26 +476,46 @@ void generate_coins(const uint32_t (&grid)[grid_size])
     }
     return;
   }
+  if(first) {
+    long randomNumber;
+    int x;
+    int y;
 
-  long randomNumber;
-  int x;
-  int y;
-
-  for (int i = 0; i < total_coins; ++i) //Satte 20 som antall coins, men dette kan jo endres
-  {
-    randomNumber = random(long(grid_size*grid_size));
-    int r = int(randomNumber);
-    pos_from_num(x, y, r);
-
-    if (getMatrixValue(x,y,grid) == 0 && getMatrixValue(x,y,coinGrid) == 0)
-    { 
-      matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
-      setMatrixValue(x,y,1,coinGrid);
-    }
-    else
+    for (int i = 0; i < total_coins; ++i) //Satte 20 som antall coins, men dette kan jo endres
     {
-      --i; // Prøver igjen
+      randomNumber = random(long(grid_size*grid_size));
+      int r = int(randomNumber);
+      pos_from_num(x, y, r);
+
+      if (getMatrixValue(x,y,grid) == 0 && getMatrixValue(x,y,coinGrid) == 0)
+      { 
+        matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
+        setMatrixValue(x,y,1,coin_2_Grid)
+        setMatrixValue(x,y,1,coinGrid);
+      }
+      else
+      {
+        --i; // Prøver igjen
+      }
     }
+    first = false;
+  }
+  else {
+    for (int i = 0; i < grid_size; ++i)
+      {
+        coinGrid[i] = coin_2_Grid[i];
+      }
+      for (int x = 0; x < grid_size; ++x)
+      {
+        for (int y = 0; y < grid_size; ++y)
+        {
+          if (getMatrixValue(x,y,coinGrid) == 1)
+          {
+            matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
+          }
+        }
+      }
+    return;
   }
 }
 
@@ -921,7 +978,7 @@ void end_screen()
   matrix.setTextSize(1);
   matrix.print("Play");
   matrix.setCursor(6, 12);
-  matrix.print("Agn?");
+  matrix.print("AGN?");
 
   delay(2000);
   while(true) {
