@@ -43,6 +43,7 @@ const int lavaTapX = 11;         // X-position of the lava "tap"
 const int lavaTapY = 15;         // Y-position of the lava source
 const int lavaPoolY = grid_size - 5; // Y-position of the lava pool
 int lavaY = lavaTapY;
+bool first = true;
  
 const uint32_t coinLavaGrid[grid_size] = 
 {
@@ -490,7 +491,7 @@ void generate_coins(const uint32_t (&grid)[grid_size])
       if (getMatrixValue(x,y,grid) == 0 && getMatrixValue(x,y,coinGrid) == 0)
       { 
         matrix.drawPixel(x, y, matrix.Color333(7, 7, 0));
-        setMatrixValue(x,y,1,coin_2_Grid)
+        setMatrixValue(x,y,1,coin_2_Grid);
         setMatrixValue(x,y,1,coinGrid);
       }
       else
