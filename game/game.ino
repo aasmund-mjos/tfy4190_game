@@ -29,7 +29,7 @@ int lastposx = posx;
 int lastposy = posy;
 int stage;
 
-int total_coins = 0;  // only for first level
+int total_coins;  // only for first level
 int collected_coins = 0;
 int last_number_of_coins = 0;
 bool new_stage = false;
@@ -1017,6 +1017,7 @@ void new_score(int total_seconds)
 void setup() {
 
   stage = 1;
+  total_coins = 0;
 
   pinMode(pressPin, INPUT_PULLUP);
   start_t = now();
