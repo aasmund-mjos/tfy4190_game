@@ -20,14 +20,14 @@
 #define audioPin 52
 #define pressPin 40
 
-int start_t = now();
+int start_t;
 
 const int grid_size = 32;
 int posx = grid_size/2-2;
 int posy = grid_size-3;
 int lastposx = posx;
 int lastposy = posy;
-int stage = 1;
+int stage;
 
 int total_coins = 0;  // only for first level
 int collected_coins = 0;
@@ -913,6 +913,12 @@ void end_screen()
   matrix.print("The");
   matrix.setCursor(6, 12);
   matrix.print("End");
+  while(true) {
+    if (digitalRead(pressPin)== LOW) {
+        setup();
+      break;
+    }
+  }
 }
 
 void new_score(int total_seconds)
@@ -999,7 +1005,10 @@ void new_score(int total_seconds)
 
 void setup() {
 
+  stage = 1;
+
   pinMode(pressPin, INPUT_PULLUP);
+  start_t = now();
   matrix.begin();
 
   // clear_EEPROM();  // if remove high score
@@ -1029,7 +1038,7 @@ void loop() {
   if (stage == 1) {get_input(grid_1);}
   if (stage == 2) {get_input(grid_2);}
   if (stage == 3) {get_input(grid_3); drop_lava();}
-  if (stage == 4) {new_score(now()-start_t); end_screen(); while(true){;}}
+  if (stage == 4) {new_score(now()-start_t); end_screen();}
   if (stage == 3) {if (check_lava())  {return;}}
 
   check_coin();
